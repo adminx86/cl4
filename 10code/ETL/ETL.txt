@@ -1,0 +1,36 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+df = pd.read_csv('sales_data.csv')
+print("Extracted Data (first 5 rows):")
+print(df.head())
+
+
+df['Date'] = pd.to_datetime(df['Date'])
+
+df['Total Amount'] = df['Quantity'] * df['Price per Unit']
+
+summary = df.groupby('Product Category').agg({'Quantity':'sum', 'Total Amount':'sum'}).reset_index()
+print("\nTransformed Summary:")
+print(summary)
+
+summary.to_csv('processed_sales_summary.csv', index=False)
+print("\nTransformed data saved to 'processed_sales_summary.csv'")
+
+plt.figure(figsize=(6,4))
+sns.barplot(data=summary, x='Product Category', y='Quantity', palette='viridis')
+plt.title('Total Quantity per Product Category')
+plt.xlabel('Product Category')
+plt.ylabel('Quantity')
+plt.show()
+
+
+daily_sales = df.groupby('Date').agg({'Total Amount':'sum'}).reset_index()
+
+plt.figure(figsize=(8,4))
+sns.lineplot(data=daily_sales, x='Date', y='Total Amount')
+plt.title('Total Sales Amount Over Time')
+plt.xlabel('Date')
+plt.ylabel('Total Amount')
+plt.show()

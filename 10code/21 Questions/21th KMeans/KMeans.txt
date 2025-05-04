@@ -1,0 +1,37 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+
+# Load dataset
+df = pd.read_csv('USA_Housing.csv')
+
+# Select correct features for clustering
+features = df[['Avg. Area Income', 'Avg. Area House Age']]
+scaler = StandardScaler()
+scaled_features = scaler.fit_transform(features)
+
+# Apply K-Means
+kmeans = KMeans(n_clusters=3, random_state=42)
+df['Cluster'] = kmeans.fit_predict(scaled_features)
+
+# Map cluster numbers to descriptive names
+cluster_names = {
+    0: 'Affluent Suburbs',
+    1: 'Emerging Communities',
+    2: 'Established Urban Areas'
+}
+
+# Visualize with descriptive names
+plt.figure(figsize=(8, 6))
+for cluster in df['Cluster'].unique():
+    cluster_data = df[df['Cluster'] == cluster]
+    plt.scatter(cluster_data['Avg. Area Income'],
+                cluster_data['Avg. Area House Age'],
+                label=cluster_names[cluster])
+plt.xlabel('Avg. Area Income')
+plt.ylabel('Avg. Area House Age')
+plt.title('Housing Market Segments (K-Means Clustering)')
+plt.legend()
+plt.grid(True)
+plt.show()

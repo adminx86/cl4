@@ -1,0 +1,53 @@
+
+import tensorflow as tf
+from tensorflow.keras import layers, models, optimizers
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.metrics import classification_report
+
+# Load and preprocess data
+(x_train, y_train), (x_test, y_test) = tf.keras.datasets.fashion_mnist.load_data()
+x_train, x_test = x_train[..., tf.newaxis]/255.0, x_test[..., tf.newaxis]/255.0
+
+def build_model(filters=[32, 64, 128], kernel_size=3, dropout_rate=0.3, lr=0.001, opt='adam'):
+    model = models.Sequential()
+    model.add(layers.Conv2D(filters[0], kernel_size, activation='relu', input_shape=(28, 28, 1)))
+    model.add(layers.MaxPooling2D())
+    for f in filters[1:]:
+        model.add(layers.Conv2D(f, kernel_size, activation='relu'))
+        model.add(layers.MaxPooling2D())
+    model.add(layers.Flatten())
+    model.add(layers.Dense(128, activation='relu'))
+    model.add(layers.Dropout(dropout_rate))
+    model.add(layers.Dense(10, activation='softmax'))
+
+    optimizer = getattr(optimizers, opt.capitalize())(learning_rate=lr)
+    model.compile(optimizer=optimizer,
+                  loss='sparse_categorical_crossentropy',
+                  metrics=['accuracy'])
+    return model
+
+# Hyperparameters
+filters = [32, 64]        # Try [32, 64, 128] or [64, 128]
+dropout = 0.5             # Try 0.2, 0.3, 0.5
+learning_rate = 0.0005    # Try 0.01, 0.001, 0.0005
+optimizer_name = 'adam'   # Try 'adam', 'sgd', 'rmsprop'
+
+model = build_model(filters=filters, dropout_rate=dropout, lr=learning_rate, opt=optimizer_name)
+history = model.fit(x_train, y_train, epochs=10, validation_data=(x_test, y_test), verbose=2)
+
+# Evaluate
+print(f"\n✅ Final Test Accuracy: {model.evaluate(x_test, y_test, verbose=0)[1]:.4f}")
+print("\n📊 Classification Report:\n", classification_report(y_test, np.argmax(model.predict(x_test), axis=1)))
+
+# Plot
+plt.figure(figsize=(12, 5))
+for i, key in enumerate(['accuracy', 'loss']):
+    plt.subplot(1, 2, i+1)
+    plt.plot(history.history[key], label='Train')
+    plt.plot(history.history['val_' + key], label='Val')
+    plt.title(key.capitalize())
+    plt.xlabel('Epoch')
+    plt.ylabel(key.capitalize())
+    plt.legend()
+plt.tight_layout(); plt.show()

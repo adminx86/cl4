@@ -1,0 +1,50 @@
+import pandas as pd
+!pip install pyodbc 
+!pip install sqlalchemy  
+!pip install openpyxl 
+
+# Import libraries
+import pandas as pd
+from sqlalchemy import create_engine
+
+# Extract Sales data
+sales_df = pd.read_excel("sales_data.xlsx", sheet_name="Sales Data")
+print("Raw Sales Data:")
+print(sales_df.head())
+
+# Extract Customer data
+customers_df = pd.read_csv("customers.csv")
+print("\nRaw Customer Data:")
+print(customers_df.head())
+
+# Extract Product data
+products_df = pd.read_excel("products.xlsx", sheet_name="Sheet1")
+print("\nRaw Product Data:")
+print(products_df.head())
+
+# Merge Sales with Product Data based on SalesMan and Sales_Rep_Name
+final_df = pd.merge(sales_df, products_df, left_on="SalesMan", right_on="Sales_Rep_Name", how="left")
+
+# Calculate Total Revenue
+final_df["TotalRevenue"] = final_df["Units"] * final_df["Unit_price"]
+
+# Drop missing values
+final_df.dropna(inplace=True)
+
+# Show transformed data
+print("\nTransformed Data:")
+print(final_df.head())
+
+from sqlalchemy import create_engine
+
+server = "DESKTOP-5AEE1LR\\SQLEXPRESS01"  
+database = "BI_Database"
+username = "etlprocess"
+password = "Test@1234"
+
+connection_string = f"mssql+pyodbc://{username}:{password}@{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server"
+engine = create_engine(connection_string)
+
+# Load DataFrame to SQL Server
+final_df.to_sql("SalesReport", engine, if_exists="replace", index=False)
+print("\nData loaded to SQL Server!")
